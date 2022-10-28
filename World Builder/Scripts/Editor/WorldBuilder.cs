@@ -247,36 +247,40 @@ public class WorldBuilderWindow : EditorWindow
             return;
         }
 
-        GameObject instance = WorldBuilderCache.Prefabs[selectedIndex];
-
         Ray ray = HandleUtility.GUIPointToWorldRay(Event.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
         {
             Handles.DrawWireDisc(hit.point, hit.normal, 1f);
-            MeshFilter[] filters = instance.GetComponentsInChildren<MeshFilter>(true);
-
-            for (int i = 0; i < filters.Length; i++)
-            {
-                MeshFilter filter = filters[i];
-                Transform t = filter.transform;
-
-                int submeshCount = filter.sharedMesh.subMeshCount;
-
-                for (int j = 0; j < submeshCount; j++)
-                {
-                    Graphics.DrawMesh(
-                        filter.sharedMesh,
-                        hit.point + t.localPosition,
-                        Quaternion.LookRotation(t.forward, hit.normal),
-                        mat,
-                        filter.gameObject.layer,
-                        scene.camera,
-                        j);
-                }
-            }
+            DrawSceneMesh(scene.camera, hit.point, hit.normal);
         }
 
         scene.Repaint();
+    }
+
+    private void DrawSceneMesh(Camera camera, Vector3 position, Vector3 normal)
+    {
+        GameObject instance = WorldBuilderCache.Prefabs[selectedIndex];
+        MeshFilter[] filters = instance.GetComponentsInChildren<MeshFilter>(true);
+
+        for (int i = 0; i < filters.Length; i++)
+        {
+            MeshFilter filter = filters[i];
+            Transform t = filter.transform;
+
+            int submeshCount = filter.sharedMesh.subMeshCount;
+
+            for (int j = 0; j < submeshCount; j++)
+            {
+                Graphics.DrawMesh(
+                    filter.sharedMesh,
+                    position + t.localPosition,
+                    Quaternion.LookRotation(t.forward, normal),
+                    mat,
+                    filter.gameObject.layer,
+                    camera,
+                    j);
+            }
+        }
     }
 
     [MenuItem("World Builder/Show Window")]
