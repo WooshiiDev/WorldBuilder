@@ -273,7 +273,7 @@ public class WorldBuilderWindow : EditorWindow
             {
                 Graphics.DrawMesh(
                     filter.sharedMesh,
-                    position + t.localPosition,
+                    position + (rotation * t.localPosition),
                     rotation,
                     mat,
                     filter.gameObject.layer,
