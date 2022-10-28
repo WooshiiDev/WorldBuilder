@@ -112,6 +112,7 @@ public class WorldBuilderWindow : EditorWindow
 
     [SerializeField] private string assetPath;
     [SerializeField] private int selectedIndex;
+    [SerializeField] private Material mat;
 
     private static Event Event
     {
@@ -120,6 +121,16 @@ public class WorldBuilderWindow : EditorWindow
             return Event.current;
         }
     }
+
+    private void OnEnable()
+    {
+        SceneView.duringSceneGui -= OnSceneGUI;
+        SceneView.duringSceneGui += OnSceneGUI;
+
+        selectedIndex = -1;
+    }
+
+    // Editor GUI
 
     private void OnGUI()
     {
@@ -155,6 +166,7 @@ public class WorldBuilderWindow : EditorWindow
         {
             EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
             WorldBuilder.IsSnapping = EditorGUILayout.Toggle("Snap", WorldBuilder.IsSnapping);
+            mat = (Material)EditorGUILayout.ObjectField(mat, typeof(Material), false);
 
             if (GUILayout.Button(assetPath))
             {
@@ -221,6 +233,54 @@ public class WorldBuilderWindow : EditorWindow
 
         WorldBuilderCache.SetCache(foundAssets);
         selectedIndex = -1; 
+    }
+
+    // Scene GUI
+    private void OnSceneGUI(SceneView scene)
+    {
+        if (selectedIndex == -1)
+        {
+            return;
+        }
+
+        GameObject instance = WorldBuilderCache.Prefabs[selectedIndex];
+
+        Ray ray = HandleUtility.GUIPointToWorldRay(Event.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
+        {
+            Handles.DrawWireDisc(hit.point, hit.normal, 1f);
+            MeshFilter[] filters = instance.GetComponentsInChildren<MeshFilter>(true);
+
+            for (int i = 0; i < filters.Length; i++)
+            {
+                MeshFilter filter = filters[i];
+                Transform t = filter.transform;
+
+                int submeshCount = filter.sharedMesh.subMeshCount;
+
+                for (int j = 0; j < submeshCount; j++)
+                {
+                    Graphics.DrawMesh(
+                        filter.sharedMesh,
+                        hit.point,
+                        Quaternion.LookRotation(hit.normal, Vector3.up),
+                        mat,
+                        filter.gameObject.layer,
+                        scene.camera,
+                        j);
+                }
+
+
+                //for (int j = 0; j < filter.; j++)
+                //{
+
+                //}
+            }
+
+            //Graphics.DrawMeshNow(filter.sharedMesh, hit.point, Quaternion.identity, 1);
+        }
+
+        scene.Repaint();
     }
 
     [MenuItem("World Builder/Show Window")]
