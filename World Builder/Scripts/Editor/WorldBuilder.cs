@@ -269,15 +269,7 @@ public class WorldBuilderWindow : EditorWindow
                         scene.camera,
                         j);
                 }
-
-
-                //for (int j = 0; j < filter.; j++)
-                //{
-
-                //}
             }
-
-            //Graphics.DrawMeshNow(filter.sharedMesh, hit.point, Quaternion.identity, 1);
         }
 
         scene.Repaint();
