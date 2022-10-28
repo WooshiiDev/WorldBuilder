@@ -262,8 +262,8 @@ public class WorldBuilderWindow : EditorWindow
                 {
                     Graphics.DrawMesh(
                         filter.sharedMesh,
-                        hit.point,
-                        Quaternion.LookRotation(hit.normal, Vector3.up),
+                        hit.point + t.localPosition,
+                        Quaternion.LookRotation(t.forward, hit.normal),
                         mat,
                         filter.gameObject.layer,
                         scene.camera,
