@@ -220,6 +220,7 @@ public class WorldBuilderWindow : EditorWindow
             .ToArray();
 
         WorldBuilderCache.SetCache(foundAssets);
+        selectedIndex = -1; 
     }
 
     [MenuItem("World Builder/Show Window")]
