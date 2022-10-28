@@ -84,9 +84,12 @@ public class WorldBuilderWindow : EditorWindow
                 string name = prefab.name;
                 GUIContent content = new GUIContent(name, AssetPreview.GetAssetPreview(prefab), name);
 
+
                 Prefabs[i] = prefab;
                 Content[i] = content;
             }
+
+            AssetPreview.SetPreviewTextureCacheSize(Content.Length * 2);
         }
     }
 
@@ -108,8 +111,6 @@ public class WorldBuilderWindow : EditorWindow
     [SerializeField] private bool isSelectingPath = false;
 
     [SerializeField] private string assetPath;
-    [SerializeField] private ObjectContent[] assetList = new ObjectContent[0];
-
     [SerializeField] private int selectedIndex;
 
     private static Event Event
@@ -131,7 +132,6 @@ public class WorldBuilderWindow : EditorWindow
 
         if (!AssetPreview.IsLoadingAssetPreviews())
         {
-            AssetPreview.SetPreviewTextureCacheSize(assetList.Length * 2);
             GUIStyle style = new GUIStyle(EditorStyles.objectField)
             {
                 imagePosition = ImagePosition.ImageOnly,
