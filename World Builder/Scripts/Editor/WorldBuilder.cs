@@ -1,8 +1,7 @@
-using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
-using UnityEditor.VersionControl;
+using System.Linq;
 
 [InitializeOnLoad()]
 public static class WorldBuilder
@@ -259,9 +258,10 @@ public class WorldBuilderWindow : EditorWindow
 
     private void DrawSceneMesh(Camera camera, Vector3 position, Vector3 normal)
     {
-        GameObject instance = WorldBuilderCache.Prefabs[selectedIndex];
-        MeshFilter[] filters = instance.GetComponentsInChildren<MeshFilter>(true);
+        GameObject prefab = WorldBuilderCache.Prefabs[selectedIndex];
+        MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
 
+        Quaternion rotation = Quaternion.LookRotation(normal) * Quaternion.Euler(90f, 0f, 0f);
         for (int i = 0; i < filters.Length; i++)
         {
             MeshFilter filter = filters[i];
@@ -274,13 +274,35 @@ public class WorldBuilderWindow : EditorWindow
                 Graphics.DrawMesh(
                     filter.sharedMesh,
                     position + t.localPosition,
-                    Quaternion.LookRotation(t.forward, normal),
+                    rotation,
                     mat,
                     filter.gameObject.layer,
                     camera,
                     j);
             }
         }
+
+        int button = Event.button;
+        int controlID = GUIUtility.GetControlID(FocusType.Passive);
+        switch (Event.GetTypeForControl(controlID))
+        {
+            case EventType.MouseDown when button == 0:
+                GUIUtility.hotControl = controlID;
+                Event.Use();
+                break;
+
+            case EventType.MouseUp when button == 0:
+
+                Undo.IncrementCurrentGroup();
+
+                GameObject instance = Instantiate(prefab, position, rotation);
+                Event.Use();
+
+                Undo.RegisterCreatedObjectUndo(instance, "WorldBuilder Instanciation.");
+                Undo.SetCurrentGroupName("[WorldBuilder] Instanciated a prefab.");
+                break;
+        }
+
     }
 
     [MenuItem("World Builder/Show Window")]
