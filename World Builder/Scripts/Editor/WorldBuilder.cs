@@ -154,7 +154,9 @@ public class WorldBuilderWindow : EditorWindow
                 margin = new RectOffset(0, 0, 0, 0),
             };
 
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
             selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+            EditorGUILayout.EndScrollView();
         }
 
         Repaint();
