@@ -114,6 +114,8 @@ public class WorldBuilderWindow : EditorWindow
     [SerializeField] private int selectedIndex;
     [SerializeField] private Material mat;
 
+    [SerializeField] private Vector2 scrollPos;
+
     private static Event Event
     {
         get
@@ -154,7 +156,9 @@ public class WorldBuilderWindow : EditorWindow
                 margin = new RectOffset(0, 0, 0, 0),
             };
 
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
             selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+            EditorGUILayout.EndScrollView();
         }
 
         Repaint();
