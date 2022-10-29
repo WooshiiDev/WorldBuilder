@@ -293,13 +293,15 @@ public class WorldBuilderWindow : EditorWindow
 
             case EventType.MouseUp when button == 0:
 
+                GUIUtility.hotControl = 0;
+
                 Undo.IncrementCurrentGroup();
-
-                GameObject instance = Instantiate(prefab, position, rotation);
-                Event.Use();
-
-                Undo.RegisterCreatedObjectUndo(instance, "WorldBuilder Instanciation.");
+                {
+                    GameObject instance = Instantiate(prefab, position, rotation);
+                    Undo.RegisterCreatedObjectUndo(instance, "WorldBuilder Instanciation.");
+                }
                 Undo.SetCurrentGroupName("[WorldBuilder] Instanciated a prefab.");
+                Event.Use();
                 break;
         }
 
