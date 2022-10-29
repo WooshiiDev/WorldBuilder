@@ -111,6 +111,8 @@ public class WorldBuilderWindow : EditorWindow
 
     [SerializeField] private string assetPath;
     [SerializeField] private int selectedIndex;
+
+    [SerializeField] private bool useDefaultMaterials = true;
     [SerializeField] private Material previewMaterial;
 
     [SerializeField] private Vector2 scrollPos;
@@ -169,7 +171,12 @@ public class WorldBuilderWindow : EditorWindow
         {
             EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
             WorldBuilder.IsSnapping = EditorGUILayout.Toggle("Snap", WorldBuilder.IsSnapping);
+
+            useDefaultMaterials = EditorGUILayout.Toggle("Use default materials", useDefaultMaterials);
+
+            EditorGUI.BeginDisabledGroup(useDefaultMaterials);
             previewMaterial = (Material)EditorGUILayout.ObjectField(previewMaterial, typeof(Material), false);
+            EditorGUI.EndDisabledGroup();
 
             if (GUILayout.Button(assetPath))
             {
@@ -262,20 +269,29 @@ public class WorldBuilderWindow : EditorWindow
         MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
 
         Quaternion rotation = Quaternion.LookRotation(normal) * Quaternion.Euler(90f, 0f, 0f);
+        Material instanceMaterial = previewMaterial;
         for (int i = 0; i < filters.Length; i++)
         {
             MeshFilter filter = filters[i];
             Transform t = filter.transform;
 
             int submeshCount = filter.sharedMesh.subMeshCount;
-
+             
             for (int j = 0; j < submeshCount; j++)
             {
+                if (useDefaultMaterials)
+                {
+                    if (filter.TryGetComponent(out MeshRenderer renderer))
+                    {
+                        instanceMaterial = renderer.sharedMaterials[j];
+                    }
+                }
+
                 Graphics.DrawMesh(
                     filter.sharedMesh,
                     position + (rotation * t.localPosition),
                     rotation,
-                    previewMaterial,
+                    instanceMaterial,
                     filter.gameObject.layer,
                     camera,
                     j);
