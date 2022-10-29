@@ -7,7 +7,6 @@ using System.Linq;
 public static class WorldBuilder
 {
     public const string ID = "World Builder";
-    public static bool IsSnapping = false;
 }
 
 public class WorldBuilderWindow : EditorWindow
@@ -170,7 +169,6 @@ public class WorldBuilderWindow : EditorWindow
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         {
             EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
-            WorldBuilder.IsSnapping = EditorGUILayout.Toggle("Snap", WorldBuilder.IsSnapping);
 
             useDefaultMaterials = EditorGUILayout.Toggle("Use default materials", useDefaultMaterials);
 
