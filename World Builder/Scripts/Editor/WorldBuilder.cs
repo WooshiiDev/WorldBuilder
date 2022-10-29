@@ -111,7 +111,7 @@ public class WorldBuilderWindow : EditorWindow
 
     [SerializeField] private string assetPath;
     [SerializeField] private int selectedIndex;
-    [SerializeField] private Material mat;
+    [SerializeField] private Material previewMaterial;
 
     [SerializeField] private Vector2 scrollPos;
 
@@ -169,7 +169,7 @@ public class WorldBuilderWindow : EditorWindow
         {
             EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
             WorldBuilder.IsSnapping = EditorGUILayout.Toggle("Snap", WorldBuilder.IsSnapping);
-            mat = (Material)EditorGUILayout.ObjectField(mat, typeof(Material), false);
+            previewMaterial = (Material)EditorGUILayout.ObjectField(previewMaterial, typeof(Material), false);
 
             if (GUILayout.Button(assetPath))
             {
@@ -275,7 +275,7 @@ public class WorldBuilderWindow : EditorWindow
                     filter.sharedMesh,
                     position + (rotation * t.localPosition),
                     rotation,
-                    mat,
+                    previewMaterial,
                     filter.gameObject.layer,
                     camera,
                     j);
