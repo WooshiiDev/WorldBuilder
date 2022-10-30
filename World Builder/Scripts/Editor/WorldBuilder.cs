@@ -110,12 +110,12 @@ public class WorldBuilderWindow : EditorWindow
 
     [SerializeField] private string assetPath;
     [SerializeField] private int selectedIndex;
+    [SerializeField] private Bounds selectedBounds;
 
     [SerializeField] private bool useDefaultMaterials = true;
     [SerializeField] private Material previewMaterial;
 
     [SerializeField] private Vector2 scrollPos;
-
     private static Event Event
     {
         get
@@ -157,7 +157,29 @@ public class WorldBuilderWindow : EditorWindow
             };
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+
+            EditorGUI.BeginChangeCheck();
+            {
+                selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (selectedIndex != -1)
+                {
+                    GameObject selectedInstance = WorldBuilderCache.Prefabs[selectedIndex];
+
+                    MeshRenderer[] renderers = selectedInstance.GetComponentsInChildren<MeshRenderer>();
+                    Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+
+                    for (int i = 0; i < renderers.Length; i++)
+                    {
+                        bounds.Encapsulate(renderers[i].bounds);
+                    }
+
+                    selectedBounds = bounds;
+                }
+            }
+
             EditorGUILayout.EndScrollView();
         }
 
