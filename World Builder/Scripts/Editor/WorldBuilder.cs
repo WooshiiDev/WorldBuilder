@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using WB.Physics;
 
 [InitializeOnLoad()]
 public static class WorldBuilder
@@ -116,6 +117,13 @@ public class WorldBuilderWindow : EditorWindow
     [SerializeField] private Material previewMaterial;
 
     [SerializeField] private Vector2 scrollPos;
+
+    // Hit mesh in scene 
+
+    private bool isPressingSnap = false;
+    private Transform hitTransform;
+    private MeshData hitMeshData;
+
     private static Event Event
     {
         get
@@ -274,15 +282,78 @@ public class WorldBuilderWindow : EditorWindow
         }
 
         Ray ray = HandleUtility.GUIPointToWorldRay(Event.mousePosition);
+       
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
         {
-            Handles.DrawWireDisc(hit.point, hit.normal, 1f);
-            DrawSceneMesh(scene.camera, hit.point, hit.normal);
+            Vector3 point = hit.point;
+            Vector3 normal = hit.normal;
+
+            Transform transform = hit.transform;
+
+            if (hitTransform != transform)
+            {
+                MeshFilter filter = transform.GetComponent<MeshFilter>();
+
+                hitTransform = transform;
+                hitMeshData = new MeshData(filter.sharedMesh, transform);
+            }
+
+            switch (Event.keyCode)
+            {
+                case KeyCode.LeftShift when !isPressingSnap && Event.type == EventType.KeyDown:
+                    isPressingSnap = true;
+                    break;
+
+                case KeyCode.LeftShift when isPressingSnap && Event.type == EventType.KeyUp:
+                    isPressingSnap = false;
+                    break;
+            }
+
+            if (isPressingSnap)
+            {
+                point = GetHitTriangle(point, ray, hit);
+            }
+
+            DrawSceneMesh(scene.camera, point, normal);
         }
 
         scene.Repaint();
     }
 
+    private Vector3 GetHitTriangle(Vector3 point, Ray ray, RaycastHit hit)
+    {
+        float closest = Mathf.Infinity;
+
+        Vector3 a, b, c;
+
+        Triangle triangle = Triangle.Zero;
+        if (hit.triangleIndex == -1)
+        {
+            for (int i = 0; i < hitMeshData.Triangles.Length; i++)
+            {
+                Triangle tri = hitMeshData.Triangles[i];
+
+                if (GeometryPhysics.IntersectRayTriangle(ray, tri.A, tri.B, tri.C, out _, true))
+                {
+                    Vector3 avg = ray.origin - ((tri.A + tri.B + tri.C) / 3);
+                    float lenSqr = avg.sqrMagnitude;
+
+                    if (lenSqr < closest)
+                    {
+                        triangle = tri;
+                        closest = lenSqr;
+                    }
+                }
+            }
+        }
+        else
+        {
+            triangle = hitMeshData.Triangles[hit.triangleIndex];
+        }
+
+        return triangle.Centroid;
+    }
+  
     private void DrawSceneMesh(Camera camera, Vector3 position, Vector3 normal)
     {
         GameObject prefab = WorldBuilderCache.Prefabs[selectedIndex];

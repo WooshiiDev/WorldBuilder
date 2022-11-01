@@ -12,6 +12,8 @@ namespace WB.Physics
     [Serializable]
     public struct Triangle
     {
+        public readonly static Triangle Zero = new Triangle(Vector2.zero, Vector2.zero, Vector2.zero);
+
         [SerializeField] private Vector3 a;
         [SerializeField] private Vector3 b;
         [SerializeField] private Vector3 c;
@@ -38,6 +40,17 @@ namespace WB.Physics
         public Vector3 C
         {
             get { return c; }
+        }
+
+        /// <summary>
+        /// The centroid (centre point) of the triangle.
+        /// </summary>
+        public Vector3 Centroid
+        {
+            get
+            {
+                return (a + b + c) / 3;
+            }
         }
 
         public Triangle(Vector3 a, Vector3 b, Vector3 c)
