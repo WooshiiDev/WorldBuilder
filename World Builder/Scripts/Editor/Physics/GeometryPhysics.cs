@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-internal static class PhysicsGeometry
+internal static class GeometryPhysics
 {
     public static bool IntersectRayTriangle(Ray ray, Vector3 a, Vector3 b, Vector3 c, out RaycastHit hit, bool isBidirectional)
     {
