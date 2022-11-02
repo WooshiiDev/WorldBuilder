@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace WB.Physics
         }
 
         /// <summary>
-        /// The centroid (centre point) of the triangle.
+        /// The centroid (median point) of the triangle.
         /// </summary>
         public Vector3 Centroid
         {
