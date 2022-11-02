@@ -311,7 +311,24 @@ public class WorldBuilderWindow : EditorWindow
 
             if (isPressingSnap)
             {
-                point = GetHitTriangle(point, ray, hit);
+                Triangle tri = GetHitTriangle(ray, hit);
+                Vector3[] snapPoints = { tri.A, tri.B, tri.C, tri.Centroid};
+
+                float dst = Mathf.Infinity;
+                Vector3 nearestPoint = Vector3.zero;
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 snapPoint = snapPoints[i];
+                    float lenSqr = (point - snapPoint).sqrMagnitude;
+
+                    if (lenSqr < dst)
+                    {
+                        nearestPoint = snapPoint;
+                        dst = lenSqr;
+                    }
+                }
+
+                point = nearestPoint;
             }
 
             DrawSceneMesh(scene.camera, point, normal);
@@ -320,11 +337,9 @@ public class WorldBuilderWindow : EditorWindow
         scene.Repaint();
     }
 
-    private Vector3 GetHitTriangle(Vector3 point, Ray ray, RaycastHit hit)
+    private Triangle GetHitTriangle(Ray ray, RaycastHit hit)
     {
         float closest = Mathf.Infinity;
-
-        Vector3 a, b, c;
 
         Triangle triangle = Triangle.Zero;
         if (hit.triangleIndex == -1)
@@ -351,7 +366,7 @@ public class WorldBuilderWindow : EditorWindow
             triangle = hitMeshData.Triangles[hit.triangleIndex];
         }
 
-        return triangle.Centroid;
+        return triangle;
     }
   
     private void DrawSceneMesh(Camera camera, Vector3 position, Vector3 normal)
