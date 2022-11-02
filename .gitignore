@@ -62,3 +62,7 @@ crashlytics-build.properties
 LocalAssets/
 
 LocalAssets.meta
+
+World Builder/Scenes/LocalBasicScene.unity
+
+World Builder/Scenes/LocalBasicScene.unity.meta
