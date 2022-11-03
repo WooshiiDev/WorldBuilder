@@ -331,18 +331,24 @@ public class WorldBuilderWindow : EditorWindow
                 point = nearestPoint;
                 normal = triangleHit.normal;
 
-                Handles.color = Color.black;
-                Handles.DrawWireDisc(tri.Centroid, normal, HandleUtility.GetHandleSize(tri.Centroid) * 0.05f);
+                Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+                Vector3 offset = Quaternion.LookRotation(normal) * new Vector3(0, 0, 0.025f);
+
+                DrawOutlinedDisc(tri.Centroid + offset, normal, 0.05f, Color.red);
 
                 for (int i = 0; i < 3; i++)
                 {
                     Vector3 corner = tri[i];
 
-                    Handles.DrawDottedLine(corner, tri.Centroid, 4f);
-                    Handles.DrawSolidDisc(corner, normal, HandleUtility.GetHandleSize(corner) * 0.05f);
+                    Handles.color = Color.blue;
+                    Handles.DrawDottedLine(corner + offset, tri.Centroid, 4f);
+
+                    DrawOutlinedDisc(corner + offset, normal, 0.05f, Color.red);
                 }
 
-                Handles.DrawAAPolyLine(tri.A, tri.B, tri.C, tri.A);
+                Handles.color = Color.blue;
+                Handles.DrawAAPolyLine(tri.A + offset, tri.B + offset, tri.C + offset, tri.A + offset);
+
                 Handles.color = Color.white;
 
             }
@@ -351,6 +357,19 @@ public class WorldBuilderWindow : EditorWindow
         }
 
         scene.Repaint();
+    }
+
+    private void DrawOutlinedDisc(Vector3 point, Vector3 normal, float radius, Color fillColour)
+    {
+        Color color = Handles.color;
+        {
+            Handles.color = fillColour;
+            Handles.DrawSolidDisc(point, normal, radius);
+
+            Handles.color = Color.black;
+            Handles.DrawWireDisc(point, normal, radius);
+        }
+        Handles.color = color;
     }
 
     private Triangle GetHitTriangle(Ray ray, int triangleIndex, RaycastHit previousHit, out RaycastHit triangleHit)
