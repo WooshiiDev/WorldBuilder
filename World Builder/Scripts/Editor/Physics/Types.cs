@@ -1,11 +1,39 @@
-using System;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+﻿using System;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace WB.Physics
 {
+    /// <summary>
+    /// Enum representing triangle types.
+    /// </summary>
+    public enum TriangleType
+    {
+        /// <summary>
+        /// Invalid triangle - points make up a line.
+        /// </summary>
+        Degenerate = -1,
+
+        /// <summary>
+        /// No triangle, default value.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// All sides are the same length.
+        /// </summary>
+        Equilateral = 1,
+
+        /// <summary>
+        /// Two sides are the same length.
+        /// </summary>
+        Isosceles = 2,
+
+        /// <summary>
+        /// No sides are equal.
+        /// </summary>
+        Scalene = 3
+    }
+
     /// <summary>
     /// Struct representing a triangle.
     /// </summary>
@@ -14,9 +42,22 @@ namespace WB.Physics
     {
         public readonly static Triangle Zero = new Triangle(Vector2.zero, Vector2.zero, Vector2.zero);
 
+        [SerializeField] private TriangleType type;
+
         [SerializeField] private Vector3 a;
         [SerializeField] private Vector3 b;
         [SerializeField] private Vector3 c;
+
+        /// <summary>
+        /// The type of triangle.
+        /// </summary>
+        public TriangleType Type
+        {
+            get
+            {
+                return type;
+            }
+        }
 
         /// <summary>
         /// First corner of the represented triangle.
@@ -55,9 +96,38 @@ namespace WB.Physics
 
         public Triangle(Vector3 a, Vector3 b, Vector3 c)
         {
+            // Assign triangles
+
             this.a = a;
             this.b = b;
             this.c = c;
+
+            // Calculate the triangle type 
+
+            float sideA = (b - a).sqrMagnitude;
+            float sideB = (b - c).sqrMagnitude;
+            float sideC = (c - a).sqrMagnitude;
+
+            // Equal sides
+
+            if (sideA == sideB && sideA == sideC)
+            {
+                type = TriangleType.Equilateral;
+            }
+            else
+            if (sideA == sideB || sideA == sideC || sideB == sideC)
+            {
+                type = TriangleType.Isosceles;
+            }
+            else
+            if (sideA != sideB && sideA != sideC && sideB != sideC)
+            {
+                type = TriangleType.Scalene;
+            }
+            else
+            {
+                type = TriangleType.Degenerate;
+            }
         }
 
         public void Transform(Transform transform)
