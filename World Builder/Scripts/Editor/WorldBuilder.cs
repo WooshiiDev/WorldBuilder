@@ -311,7 +311,7 @@ public class WorldBuilderWindow : EditorWindow
 
             if (isPressingSnap)
             {
-                Triangle tri = GetHitTriangle(ray, hit);
+                Triangle tri = GetHitTriangle(ray, hit.triangleIndex, hit, out RaycastHit triangleHit);
                 Vector3[] snapPoints = { tri.A, tri.B, tri.C, tri.Centroid};
 
                 float dst = Mathf.Infinity;
@@ -329,6 +329,7 @@ public class WorldBuilderWindow : EditorWindow
                 }
 
                 point = nearestPoint;
+                normal = triangleHit.normal;
 
                 Handles.color = Color.black;
                 Handles.DrawWireDisc(tri.Centroid, normal, HandleUtility.GetHandleSize(tri.Centroid) * 0.05f);
@@ -352,33 +353,42 @@ public class WorldBuilderWindow : EditorWindow
         scene.Repaint();
     }
 
-    private Triangle GetHitTriangle(Ray ray, RaycastHit hit)
+    private Triangle GetHitTriangle(Ray ray, int triangleIndex, RaycastHit previousHit, out RaycastHit triangleHit)
     {
+        triangleHit = previousHit;
+
         float closest = Mathf.Infinity;
 
         Triangle triangle = Triangle.Zero;
-        if (hit.triangleIndex == -1)
+        if (triangleIndex == -1)
         {
             for (int i = 0; i < hitMeshData.Triangles.Length; i++)
             {
                 Triangle tri = hitMeshData.Triangles[i];
 
-                if (GeometryPhysics.IntersectRayTriangle(ray, tri.A, tri.B, tri.C, out _, true))
+                // Reuse the original raycast parameter
+
+                if (GeometryPhysics.IntersectRayTriangle(ray, tri.A, tri.B, tri.C, out previousHit, true))
                 {
                     Vector3 avg = ray.origin - ((tri.A + tri.B + tri.C) / 3);
                     float lenSqr = avg.sqrMagnitude;
+
+                    // The closest triangle hit is the one required
 
                     if (lenSqr < closest)
                     {
                         triangle = tri;
                         closest = lenSqr;
+                        triangleHit = previousHit;
                     }
                 }
             }
         }
         else
         {
-            triangle = hitMeshData.Triangles[hit.triangleIndex];
+            // If we already have the index, there's no reason to loop over the mesh
+
+            triangle = hitMeshData.Triangles[triangleIndex];
         }
 
         return triangle;
