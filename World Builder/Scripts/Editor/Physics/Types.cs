@@ -146,6 +146,26 @@ namespace WB.Physics
         {
             return $"Triangle: ({a},{b},{c})";
         }
+
+        public Vector3 this[int i]
+        {
+            get
+            {
+                switch (i)
+                {
+                    case 0:
+                        return a;
+
+                    case 1: 
+                        return b;
+
+                    case 2: 
+                        return c;
+                    default:
+                        throw new IndexOutOfRangeException("Invalid Triangle index.");
+                }
+            }
+        } 
     }
 
     /// <summary>

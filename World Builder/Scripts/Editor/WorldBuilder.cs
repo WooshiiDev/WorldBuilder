@@ -329,6 +329,21 @@ public class WorldBuilderWindow : EditorWindow
                 }
 
                 point = nearestPoint;
+
+                Handles.color = Color.black;
+                Handles.DrawWireDisc(tri.Centroid, normal, HandleUtility.GetHandleSize(tri.Centroid) * 0.05f);
+
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 corner = tri[i];
+
+                    Handles.DrawDottedLine(corner, tri.Centroid, 4f);
+                    Handles.DrawSolidDisc(corner, normal, HandleUtility.GetHandleSize(corner) * 0.05f);
+                }
+
+                Handles.DrawAAPolyLine(tri.A, tri.B, tri.C, tri.A);
+                Handles.color = Color.white;
+
             }
 
             DrawSceneMesh(scene.camera, point, normal);
