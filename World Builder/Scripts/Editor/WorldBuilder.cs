@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using WB.Physics;
 
 [InitializeOnLoad()]
 public static class WorldBuilder
@@ -106,15 +108,24 @@ public class WorldBuilderWindow : EditorWindow
         }
     }
 
+    private const float HANDLES_OFFSET = 5e-3f;
+
     [SerializeField] private bool isSelectingPath = false;
 
     [SerializeField] private string assetPath;
     [SerializeField] private int selectedIndex;
+    [SerializeField] private Bounds selectedBounds;
 
     [SerializeField] private bool useDefaultMaterials = true;
     [SerializeField] private Material previewMaterial;
 
     [SerializeField] private Vector2 scrollPos;
+
+    // Hit mesh in scene 
+
+    private bool isPressingSnap = false;
+    private Transform hitTransform;
+    private MeshData hitMeshData;
 
     private static Event Event
     {
@@ -157,7 +168,29 @@ public class WorldBuilderWindow : EditorWindow
             };
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+
+            EditorGUI.BeginChangeCheck();
+            {
+                selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (selectedIndex != -1)
+                {
+                    GameObject selectedInstance = WorldBuilderCache.Prefabs[selectedIndex];
+
+                    MeshRenderer[] renderers = selectedInstance.GetComponentsInChildren<MeshRenderer>();
+                    Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+
+                    for (int i = 0; i < renderers.Length; i++)
+                    {
+                        bounds.Encapsulate(renderers[i].bounds);
+                    }
+
+                    selectedBounds = bounds;
+                }
+            }
+
             EditorGUILayout.EndScrollView();
         }
 
@@ -252,15 +285,105 @@ public class WorldBuilderWindow : EditorWindow
         }
 
         Ray ray = HandleUtility.GUIPointToWorldRay(Event.mousePosition);
+       
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
         {
-            Handles.DrawWireDisc(hit.point, hit.normal, 1f);
-            DrawSceneMesh(scene.camera, hit.point, hit.normal);
+            Vector3 point = hit.point;
+            Vector3 normal = hit.normal;
+
+            Transform transform = hit.transform;
+
+            if (hitTransform != transform)
+            {
+                MeshFilter filter = transform.GetComponent<MeshFilter>();
+
+                hitTransform = transform;
+                hitMeshData = new MeshData(filter.sharedMesh, transform);
+            }
+
+            switch (Event.keyCode)
+            {
+                case KeyCode.LeftShift when !isPressingSnap && Event.type == EventType.KeyDown:
+                    isPressingSnap = true;
+                    break;
+
+                case KeyCode.LeftShift when isPressingSnap && Event.type == EventType.KeyUp:
+                    isPressingSnap = false;
+                    break;
+            }
+
+            if (isPressingSnap)
+            {
+                Triangle tri = GetHitTriangle(ray, hit.triangleIndex, hit, out RaycastHit triangleHit);
+                Vector3[] snapPoints = { tri.A, tri.B, tri.C, tri.Centroid};
+
+                float dst = Mathf.Infinity;
+                Vector3 nearestPoint = Vector3.zero;
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 snapPoint = snapPoints[i];
+                    float lenSqr = (point - snapPoint).sqrMagnitude;
+
+                    if (lenSqr < dst)
+                    {
+                        nearestPoint = snapPoint;
+                        dst = lenSqr;
+                    }
+                }
+
+                point = nearestPoint;
+                normal = triangleHit.normal;
+
+                DrawTriangle(tri, normal);
+            }
+
+            DrawSceneMesh(scene.camera, point, normal);
         }
 
         scene.Repaint();
     }
 
+    private Triangle GetHitTriangle(Ray ray, int triangleIndex, RaycastHit previousHit, out RaycastHit triangleHit)
+    {
+        triangleHit = previousHit;
+
+        float closest = Mathf.Infinity;
+
+        Triangle triangle = Triangle.Zero;
+        if (triangleIndex == -1)
+        {
+            for (int i = 0; i < hitMeshData.Triangles.Length; i++)
+            {
+                Triangle tri = hitMeshData.Triangles[i];
+
+                // Reuse the original raycast parameter
+
+                if (GeometryPhysics.IntersectRayTriangle(ray, tri.A, tri.B, tri.C, out previousHit, true))
+                {
+                    Vector3 avg = ray.origin - ((tri.A + tri.B + tri.C) / 3);
+                    float lenSqr = avg.sqrMagnitude;
+
+                    // The closest triangle hit is the one required
+
+                    if (lenSqr < closest)
+                    {
+                        triangle = tri;
+                        closest = lenSqr;
+                        triangleHit = previousHit;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // If we already have the index, there's no reason to loop over the mesh
+
+            triangle = hitMeshData.Triangles[triangleIndex];
+        }
+
+        return triangle;
+    }
+  
     private void DrawSceneMesh(Camera camera, Vector3 position, Vector3 normal)
     {
         GameObject prefab = WorldBuilderCache.Prefabs[selectedIndex];
@@ -319,6 +442,50 @@ public class WorldBuilderWindow : EditorWindow
                 break;
         }
 
+    }
+
+    // GUI
+
+    private void DrawTriangle(Triangle triangle, Vector3 normal)
+    {
+        Vector3 offset = Quaternion.LookRotation(normal) * new Vector3(0, 0, HANDLES_OFFSET);
+
+        triangle.Move(offset);
+        Vector3 centroid = triangle.Centroid;
+        float handleSize = HandleUtility.GetHandleSize(centroid);
+        float sphereSize = Mathf.Min(Mathf.Max(handleSize * 0.1f, 0.025f), 0.5f);
+
+        CompareFunction zTest = Handles.zTest;
+        Handles.zTest = CompareFunction.LessEqual;
+        {
+            // Draw the snap points
+            Handles.color = Color.red;
+            Handles.SphereHandleCap(0, centroid, Quaternion.identity, sphereSize, EventType.Repaint);
+
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 corner = triangle[i];
+
+                Handles.color = Color.black;
+                Handles.DrawDottedLine(corner, centroid, 4f);
+
+                Handles.color = Color.red;
+                Handles.SphereHandleCap(0, corner, Quaternion.identity, sphereSize, EventType.Repaint);
+            }
+
+            // Draw the outline of the triangle 
+
+            Handles.color = Color.black;
+            {
+                Vector3 a = triangle.A;
+                Vector3 b = triangle.B;
+                Vector3 c = triangle.C;
+
+                Handles.DrawPolyLine(a, b, c, a);
+            }
+            Handles.color = Color.white;
+        }
+        Handles.zTest = zTest;
     }
 
     [MenuItem("World Builder/Show Window")]
