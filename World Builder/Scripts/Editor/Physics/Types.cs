@@ -142,6 +142,17 @@ namespace WB.Physics
             c = transform.TransformPoint(c);
         }
 
+        /// <summary>
+        /// Offset the triangle.
+        /// </summary>
+        /// <param name="vector">The offset to apply to the triangle</param>
+        public void Move(Vector3 vector)
+        {
+            a += vector;
+            b += vector;
+            c += vector;
+        }
+
         public override string ToString()
         {
             return $"Triangle: ({a},{b},{c})";
