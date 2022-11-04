@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace WB.Physics
+namespace WB.Geometry
 {
     /// <summary>
     /// Enum representing triangle types.
