@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace WB
 {
-    using Physics;
+    using Geometry;
 
     [InitializeOnLoad()]
     public static class WorldBuilder
