@@ -7,6 +7,7 @@ using System.Linq;
 namespace WB
 {
     using Geometry;
+    using UnityEditor.PackageManager.UI;
 
     [InitializeOnLoad()]
     public static class WorldBuilder
@@ -172,22 +173,25 @@ namespace WB
 
             if (!AssetPreview.IsLoadingAssetPreviews())
             {
-                GUIStyle style = new GUIStyle(EditorStyles.objectField)
+                GUIStyle prefabItemStyle = new GUIStyle(EditorStyles.objectField)
                 {
                     imagePosition = ImagePosition.ImageOnly,
 
-                    fixedHeight = 96,
-                    fixedWidth = 96,
+                    fixedWidth = 64f,
+                    fixedHeight = 64f,
 
                     padding = new RectOffset(4, 4, 4, 4),
                     margin = new RectOffset(0, 0, 0, 0),
                 };
 
-                scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
+                scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUI.skin.box);
+                Rect size = EditorGUILayout.GetControlRect();
+
+                int count = Mathf.FloorToInt(size.width / 64f);
 
                 EditorGUI.BeginChangeCheck();
                 {
-                    selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, 4, style);
+                    selectedIndex = GUILayout.SelectionGrid(selectedIndex, WorldBuilderCache.Content, count, prefabItemStyle);
                 }
                 if (EditorGUI.EndChangeCheck())
                 {
