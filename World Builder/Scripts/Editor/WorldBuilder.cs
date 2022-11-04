@@ -193,8 +193,6 @@ public class WorldBuilderWindow : EditorWindow
 
             EditorGUILayout.EndScrollView();
         }
-
-        Repaint();
     }
 
     private void DrawSearchSettings()
