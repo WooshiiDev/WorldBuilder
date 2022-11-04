@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,6 +107,8 @@ public class WorldBuilderWindow : EditorWindow
             this.content = content;
         }
     }
+
+    private const float HANDLES_OFFSET = 5e-3f;
 
     [SerializeField] private bool isSelectingPath = false;
 
@@ -331,45 +334,13 @@ public class WorldBuilderWindow : EditorWindow
                 point = nearestPoint;
                 normal = triangleHit.normal;
 
-                Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
-                Vector3 offset = Quaternion.LookRotation(normal) * new Vector3(0, 0, 0.025f);
-
-                DrawOutlinedDisc(tri.Centroid + offset, normal, 0.05f, Color.red);
-
-                for (int i = 0; i < 3; i++)
-                {
-                    Vector3 corner = tri[i];
-
-                    Handles.color = Color.blue;
-                    Handles.DrawDottedLine(corner + offset, tri.Centroid, 4f);
-
-                    DrawOutlinedDisc(corner + offset, normal, 0.05f, Color.red);
-                }
-
-                Handles.color = Color.blue;
-                Handles.DrawAAPolyLine(tri.A + offset, tri.B + offset, tri.C + offset, tri.A + offset);
-
-                Handles.color = Color.white;
-
+                DrawTriangle(tri, normal);
             }
 
             DrawSceneMesh(scene.camera, point, normal);
         }
 
         scene.Repaint();
-    }
-
-    private void DrawOutlinedDisc(Vector3 point, Vector3 normal, float radius, Color fillColour)
-    {
-        Color color = Handles.color;
-        {
-            Handles.color = fillColour;
-            Handles.DrawSolidDisc(point, normal, radius);
-
-            Handles.color = Color.black;
-            Handles.DrawWireDisc(point, normal, radius);
-        }
-        Handles.color = color;
     }
 
     private Triangle GetHitTriangle(Ray ray, int triangleIndex, RaycastHit previousHit, out RaycastHit triangleHit)
@@ -471,6 +442,50 @@ public class WorldBuilderWindow : EditorWindow
                 break;
         }
 
+    }
+
+    // GUI
+
+    private void DrawTriangle(Triangle triangle, Vector3 normal)
+    {
+        Vector3 offset = Quaternion.LookRotation(normal) * new Vector3(0, 0, HANDLES_OFFSET);
+
+        triangle.Move(offset);
+        Vector3 centroid = triangle.Centroid;
+        float handleSize = HandleUtility.GetHandleSize(centroid);
+        float sphereSize = Mathf.Min(Mathf.Max(handleSize * 0.1f, 0.025f), 0.5f);
+
+        CompareFunction zTest = Handles.zTest;
+        Handles.zTest = CompareFunction.LessEqual;
+        {
+            // Draw the snap points
+            Handles.color = Color.red;
+            Handles.SphereHandleCap(0, centroid, Quaternion.identity, sphereSize, EventType.Repaint);
+
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 corner = triangle[i];
+
+                Handles.color = Color.black;
+                Handles.DrawDottedLine(corner, centroid, 4f);
+
+                Handles.color = Color.red;
+                Handles.SphereHandleCap(0, corner, Quaternion.identity, sphereSize, EventType.Repaint);
+            }
+
+            // Draw the outline of the triangle 
+
+            Handles.color = Color.black;
+            {
+                Vector3 a = triangle.A;
+                Vector3 b = triangle.B;
+                Vector3 c = triangle.C;
+
+                Handles.DrawPolyLine(a, b, c, a);
+            }
+            Handles.color = Color.white;
+        }
+        Handles.zTest = zTest;
     }
 
     [MenuItem("World Builder/Show Window")]
