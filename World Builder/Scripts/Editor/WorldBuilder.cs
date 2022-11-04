@@ -140,6 +140,19 @@ namespace WB
 
         private void OnEnable()
         {
+            // Assign default path
+
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                string dataPath = Application.dataPath;
+                int index = dataPath.LastIndexOf('/');
+
+                // Get local path but cutting off the system path
+
+                assetPath = dataPath.Substring(index + 1, dataPath.Length - index - 1);
+                assetPath += '/'; // Don't per say need this, but keeps formatting consistent
+            }
+
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
 
