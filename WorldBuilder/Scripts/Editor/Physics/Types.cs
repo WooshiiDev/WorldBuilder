@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace WB.Geometry
+namespace Wooshii.WorldBuilder.Geometry
 {
     /// <summary>
     /// Enum representing triangle types.
