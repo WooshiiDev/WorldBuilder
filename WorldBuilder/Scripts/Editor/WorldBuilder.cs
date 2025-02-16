@@ -113,6 +113,8 @@ namespace Wooshii.WorldBuilder
 
         private const float HANDLES_OFFSET = 5e-3f;
 
+        [SerializeField] private bool enabled;
+
         [SerializeField] private bool isSelectingPath = false;
 
         [SerializeField] private string assetPath;
@@ -165,6 +167,10 @@ namespace Wooshii.WorldBuilder
         {
             DrawSearchSettings();
 
+            enabled = EditorGUILayout.Toggle("Enabled", enabled);
+
+            EditorGUI.BeginDisabledGroup(!enabled);
+
             if (GUILayout.Button("Load Prefabs"))
             {
                 SearchAndCacheAssets();
@@ -212,6 +218,8 @@ namespace Wooshii.WorldBuilder
 
                 EditorGUILayout.EndScrollView();
             }
+
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawSearchSettings()
@@ -294,9 +302,10 @@ namespace Wooshii.WorldBuilder
         }
 
         // Scene GUI
+
         private void OnSceneGUI(SceneView scene)
         {
-            if (selectedIndex == -1)
+            if (!enabled || selectedIndex == -1)
             {
                 return;
             }
