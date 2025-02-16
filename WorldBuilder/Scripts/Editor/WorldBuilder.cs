@@ -4,10 +4,9 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WB
+namespace Wooshii.WorldBuilder
 {
     using Geometry;
-    using UnityEditor.PackageManager.UI;
 
     [InitializeOnLoad()]
     public static class WorldBuilder
