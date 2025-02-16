@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Object = UnityEngine.Object;
 
 namespace Wooshii.WorldBuilder
 {
@@ -96,6 +98,8 @@ namespace Wooshii.WorldBuilder
             }
         }
 
+        public static event Action<bool> OnEnableChanged;
+
         [System.Serializable]
         public struct ObjectContent
         {
@@ -112,6 +116,8 @@ namespace Wooshii.WorldBuilder
         }
 
         private const float HANDLES_OFFSET = 5e-3f;
+
+        [SerializeField] private static bool enabled;
 
         [SerializeField] private bool isSelectingPath = false;
 
@@ -138,6 +144,20 @@ namespace Wooshii.WorldBuilder
             }
         }
 
+        private static bool Enabled
+        {
+            get
+            {
+                return enabled;
+            }
+
+            set
+            {
+                enabled = value; 
+                OnEnableChanged?.Invoke(value);
+            }
+        }
+
         private void OnEnable()
         {
             // Assign default path
@@ -157,6 +177,17 @@ namespace Wooshii.WorldBuilder
             SceneView.duringSceneGui += OnSceneGUI;
 
             selectedIndex = -1;
+            OnEnableChanged += OnEnableChange;
+        }
+
+        private void OnDisable()
+        {
+            OnEnableChanged -= OnEnableChange;
+        }
+
+        private void OnEnableChange(bool enabled)
+        {
+            Repaint();
         }
 
         // Editor GUI
@@ -164,6 +195,10 @@ namespace Wooshii.WorldBuilder
         private void OnGUI()
         {
             DrawSearchSettings();
+
+            Enabled = EditorGUILayout.Toggle("Enabled", Enabled);
+
+            EditorGUI.BeginDisabledGroup(!enabled);
 
             if (GUILayout.Button("Load Prefabs"))
             {
@@ -212,6 +247,9 @@ namespace Wooshii.WorldBuilder
 
                 EditorGUILayout.EndScrollView();
             }
+
+            EditorGUI.EndDisabledGroup();
+
         }
 
         private void DrawSearchSettings()
@@ -294,9 +332,17 @@ namespace Wooshii.WorldBuilder
         }
 
         // Scene GUI
+
         private void OnSceneGUI(SceneView scene)
         {
-            if (selectedIndex == -1)
+            if (Event.type == EventType.KeyDown && Event.keyCode == KeyCode.Space)
+            {
+                Enabled = !Enabled;
+                Event.Use();
+                return;
+            }
+
+            if (!Enabled || selectedIndex == -1)
             {
                 return;
             }
