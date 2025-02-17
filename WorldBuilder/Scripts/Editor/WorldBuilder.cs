@@ -335,7 +335,7 @@ namespace Wooshii.WorldBuilder
 
         private void OnSceneGUI(SceneView scene)
         {
-            if (Event.type == EventType.KeyDown && Event.keyCode == KeyCode.Space)
+            if (Event.type == EventType.KeyDown && Event.control && Event.keyCode == KeyCode.Space)
             {
                 Enabled = !Enabled;
                 Event.Use();
